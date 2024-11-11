@@ -32,7 +32,7 @@ DEVICE = (
 # You can set the model path name in case you want to keep training it.
 # During the training/testing loop, the model state is saved
 # (only the best model so far is saved)
-# LOAD_MODEL_FNAME = None
+LOAD_MODEL_FNAME = None
 LOAD_MODEL_PATH = f"model_{MODEL.__name__}_noble-meadow-16"
 
 # CONSTANTS TO LEAVE
