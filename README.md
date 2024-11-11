@@ -13,7 +13,9 @@ This will keep IT support off your backs, so you don't run stuff on the login no
 Data is available on the cluster in the directory
 
 ```
-/dtu-compute/maalhe/tm/02456/data/
+/dtu-compute/02456-p4-e24/
+/dtu-compute/02456-p4-e24/data
+/dtu-compute/02456-p4-e24/scripts
 ```
 
 where you will find a metadata file `stmf_data_3.csv` with targets and spectrogram data folder `/data_fft-512_tscropwidth-150-200_vrcropwidth-60-15`, which itself has subdirectories with `train` and `test` data (and `validation`, but disregard that for now).
