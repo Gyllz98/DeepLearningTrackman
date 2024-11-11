@@ -17,5 +17,5 @@ echo "Running script..."
 
 module load cuda/11.8
 module load python3/3.10.13
-source 02456_venv/bin/activate
-python3 /dtu-compute/maalhe/tm/02456/scripts/modular_train_test.py > log/modular_train_test$(date +"%d-%m-%y")_$(date +'%H:%M:%S').log
+source /zhome/b3/8/148387/trackman_project/trackman/bin/activate
+python3 /zhome/b3/8/148387/trackman_project/DeepLearningTrackman/modular_train_test.py > log/modular_train_test$(date +"%d-%m-%y")_$(date +'%H:%M:%S').log
