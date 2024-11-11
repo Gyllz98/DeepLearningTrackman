@@ -3,3 +3,7 @@
 *.out
 *.pyc
 *.log
+*.wandb
+*.txt
+*.json
+*/latest-run
