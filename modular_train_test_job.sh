@@ -10,12 +10,12 @@
 ### Number of hours needed
 #BSUB -W 23:59
 ### added outputs and errors to files
-#BSUB -o outputs/Output_%J.out
-#BSUB -e outputs/Error_%J.err
+BSUB -o outputs/Output_%J.out
+BSUB -e outputs/Error_%J.err
 
 echo "Running script..."
 
 module load cuda/11.8
 module load python3/3.10.13
-source 02456_venv/bin/activate
-python3 /dtu-compute/maalhe/tm/02456/scripts/modular_train_test.py > log/modular_train_test$(date +"%d-%m-%y")_$(date +'%H:%M:%S').log
+source /zhome/33/9/203501/DL_project/venv/bin/activate
+python3 /zhome/33/9/203501/DL_project/DeepLearningTrackman/modular_train_test.py > log/modular_train_test$(date +"%d-%m-%y")_$(date +'%H:%M:%S').log
