@@ -10,8 +10,8 @@
 ### Number of hours needed
 #BSUB -W 23:59
 ### added outputs and errors to files
-#BSUB -o outputs/Output_%J.out
-#BSUB -e outputs/Error_%J.err
+BSUB -o outputs/Output_%J.out
+BSUB -e outputs/Error_%J.err
 
 echo "Running script..."
 
