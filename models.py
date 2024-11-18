@@ -91,12 +91,30 @@ class YourModel(SpectrVelCNNRegr):
     layer.
 
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, dropout_rate):
+        super().__init__() 
+        self.__name__ = "DropoutModel"
+
+        self.Regression = nn.Sequential(
+            nn.Linear(in_features=37120, out_features=1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+            nn.Linear(in_features=1024, out_features=256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+        )
+
+
 
     def _hidden_layer(self, x):
         """Overwrite this function"""
-        pass
+        x=self.conv2(x)
+        x=self.conv3(x)
+        x=self.conv4(x)
+        x=self.flatten(x)
+        return self.Regression(x)
 
 # takes in a module and applies the specified weight initialization
 def weights_init_uniform_rule(m):

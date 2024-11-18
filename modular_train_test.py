@@ -8,13 +8,13 @@ import wandb
 
 from custom_transforms import LoadSpectrogram, NormalizeSpectrogram, ToTensor, InterpolateSpectrogram
 from data_management import make_dataset_name
-from models import SpectrVelCNNRegr, weights_init_uniform_rule
+from models import SpectrVelCNNRegr, YourModel, weights_init_uniform_rule
 
 # GROUP NUMBER
 GROUP_NUMBER = 42
 
 # CONSTANTS TO MODIFY AS YOU WISH
-MODEL = SpectrVelCNNRegr
+MODEL = YourModel(0.5)
 LEARNING_RATE = 10**-5
 EPOCHS = 100 # the model converges in test perfermance after ~250-300 epochs
 BATCH_SIZE = 10
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     
     # Set up wandb for reporting
     wandb.init(
-        project=f"02456_group_{GROUP_NUMBER}",
+        project=f"trackman-project",
         config={
             "learning_rate": LEARNING_RATE,
             "architecture": MODEL.__name__,
