@@ -12,10 +12,11 @@ def print_model_complexity(model: Module) -> None:
     total_params = sum(p.numel() for p in model().parameters())
     
     print(f"Number of parameters in model {model.__name__}: {total_params} = {'{:.2e}'.format(total_params)}")
+    return total_params # Added return total params 
 
 # %%
 if __name__ == "__main__":
     model = SpectrVelCNNRegr
-    print_model_complexity(model)
-
+    total_params = print_model_complexity(model)
+    
 # %%
