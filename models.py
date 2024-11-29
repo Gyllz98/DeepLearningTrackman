@@ -79,7 +79,7 @@ class SpectrVelCNNRegr(nn.Module):
         x = self._hidden_layer(x)
         return self._output_layer(x)
 
-class YourModel(SpectrVelCNNRegr):
+class YourModel(SpectrVelCNNRegr): # Modify it myself
     """Define your model here.
 
     I suggest make your changes initial changes
@@ -91,7 +91,7 @@ class YourModel(SpectrVelCNNRegr):
     layer.
 
     """
-    def __init__(self, dropout_rate):
+    def __init__(self):
         super().__init__() 
         self.__name__ = "DropoutModel"
 
@@ -99,11 +99,11 @@ class YourModel(SpectrVelCNNRegr):
             nn.Linear(in_features=37120, out_features=1024),
             nn.BatchNorm1d(1024),
             nn.ReLU(),
-            nn.Dropout(dropout_rate),
+            # nn.Dropout(dropout_rate),
             nn.Linear(in_features=1024, out_features=256),
             nn.BatchNorm1d(256),
             nn.ReLU(),
-            nn.Dropout(dropout_rate),
+            # nn.Dropout(dropout_rate),
         )
 
 

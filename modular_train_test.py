@@ -14,11 +14,11 @@ from models import SpectrVelCNNRegr, YourModel, weights_init_uniform_rule
 GROUP_NUMBER = 42
 
 # CONSTANTS TO MODIFY AS YOU WISH
-MODEL = YourModel(0.5)
+MODEL = YourModel
 LEARNING_RATE = 10**-5
 EPOCHS = 100 # the model converges in test perfermance after ~250-300 epochs
 BATCH_SIZE = 10
-NUM_WORKERS = 10
+NUM_WORKERS = 4
 OPTIMIZER = torch.optim.SGD
 DEVICE = (
     "cuda"
