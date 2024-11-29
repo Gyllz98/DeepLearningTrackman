@@ -1,5 +1,5 @@
 import torch.nn as nn
-
+import torch
 from loss import mse_loss
 from datasets import SpectrogramDataset
     
@@ -79,6 +79,9 @@ class SpectrVelCNNRegr(nn.Module):
         x = self._hidden_layer(x)
         return self._output_layer(x)
 
+
+##### From Here is Just failure ######
+
 class YourModel(SpectrVelCNNRegr):
     """Define your model here.
 
@@ -91,25 +94,24 @@ class YourModel(SpectrVelCNNRegr):
     layer.
 
     """
-    def __init__(self, dropout_rate):
+    def __init__(self):
         super().__init__() 
-        self.__name__ = "DropoutModel"
 
         self.Regression = nn.Sequential(
             nn.Linear(in_features=37120, out_features=1024),
             nn.BatchNorm1d(1024),
-            nn.ReLU(),
-            nn.Dropout(dropout_rate),
+            nn.LeakyReLU(),
+            nn.Dropout(0.5),
             nn.Linear(in_features=1024, out_features=256),
             nn.BatchNorm1d(256),
-            nn.ReLU(),
-            nn.Dropout(dropout_rate),
+            nn.LeakyReLU(),
+            nn.Dropout(0.5),
         )
 
 
 
     def _hidden_layer(self, x):
-        """Overwrite this function"""
+        """Overwrite this functoin"""
         x=self.conv2(x)
         x=self.conv3(x)
         x=self.conv4(x)
