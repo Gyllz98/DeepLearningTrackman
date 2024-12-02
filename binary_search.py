@@ -59,7 +59,9 @@ class BinarySearch:
         return None, mid_params
 
     def calc_loss(self, params):
-        pass
+        result = find_scaling_factors_grid_search(params) # Find the optimal alpha and beta
+        
+        return result
 
     # Outputs random loss wrt. parameter count. - Used for testing
     def calc_loss_rand(self, params): 
@@ -98,7 +100,7 @@ if __name__ == "__main__":
     next_params = binary_search.right_params
     count = 0
     while run is None:
-        current_loss = binary_search.calc_loss(next_params)
+        current_loss = binary_search.calc_loss_rand(next_params)
         run, next_params = binary_search.search_next_params(current_loss)
         if run == 0:
             break
@@ -112,3 +114,6 @@ if __name__ == "__main__":
     print("Search history (params, loss):")
     for i, (params, loss) in enumerate(binary_search.history):
         print(f"Params: {params}, Loss: {loss:.4f}")
+
+    result = binary_search.calc_loss(100000)
+    print(result)
