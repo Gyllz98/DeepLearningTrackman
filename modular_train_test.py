@@ -9,14 +9,15 @@ import wandb
 from custom_transforms import LoadSpectrogram, NormalizeSpectrogram, ToTensor, InterpolateSpectrogram
 from data_management import make_dataset_name
 from models import SpectrVelCNNRegr, YourModel, weights_init_uniform_rule
+from SearchNet import SearchNet
 
 # GROUP NUMBER
 GROUP_NUMBER = 42
 
 # CONSTANTS TO MODIFY AS YOU WISH
-MODEL = YourModel
+MODEL = SearchNet
 LEARNING_RATE = 10**-5
-EPOCHS = 100 # the model converges in test perfermance after ~250-300 epochs
+EPOCHS = 1 # the model converges in test perfermance after ~250-300 epochs
 BATCH_SIZE = 10
 NUM_WORKERS = 4
 OPTIMIZER = torch.optim.SGD
