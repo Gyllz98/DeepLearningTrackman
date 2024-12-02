@@ -18,32 +18,45 @@ class BinarySearch:
         self.history = []  # (param count, loss)
         self.history.append((self.right_params, self.right_loss))
 
-    def search_next_params(self, current_loss):
-        # Update history
-        self.history.append((self.right_params, current_loss))
+    def search_next_params(self, current_loss): # Correct history appending 
 
         # Calculate midpoint
         mid_params = (self.left_params + self.right_params) // 2
 
-        # Check if tolerance condition is met
-        if abs(self.right_params - mid_params) <= self.tolerance:
-            print(f"Binary search completed. Optimal params: {self.right_params}")
+        # Check tolerance convergence
+        if abs(mid_params - self.right_params) <= self.tolerance:
             return 0, self.right_params
 
-        # Decide whether to search left or right
-        if current_loss < self.history[-2][1]:  # If current loss < previous loss
-            self.right_params = mid_params  # Move to the left
-        else:
-            self.left_params = mid_params  # Move to the right
-
+        # Compare losses at different points
+        if len(self.history) > 1 and current_loss < self.history[-2][1]:  # Middle loss better than right loss
+            # Check relationship with initial loss
+            if current_loss < self.history[0][1]:
+                # Middle loss is best so far
+                if self.history[0][1] < self.history[-2][1]:
+                    # Initial loss was better than right loss
+                    self.right_params = mid_params  # Reduce right boundary
+                else: # Right loss was better
+                    self.left_params = mid_params  # Increase left boundary
+            else: # Middle loss worse than initial loss
+                self.left_params = mid_params  # Increase left boundary
+        else: # Right loss is better
+            self.left_params = mid_params  # Increase left boundary
+        
+        self.history.append((mid_params, current_loss))
         return None, mid_params
+
 
     def calc_loss(self, params):
         """
         Placeholder loss function for demonstration. 
         Assumes the loss decreases as parameters increase up to a point.
         """
+        # This is to recalculate if the middle params is better then both the min and max params. 
+        # Also for general loss calculation. Or at least to call a the model with loss. 
         return np.exp(-params / self.init_max_params) + np.random.uniform(0, 0.01)  # Adding small noise
+
+    def print_tolerance(self):
+        print(f"Tolerance: {self.tolerance}")
 
 
 if __name__ == "__main__":
@@ -66,6 +79,7 @@ if __name__ == "__main__":
         model=model,
         tolerance=tolerance
     )
+    binary_search.print_tolerance()
 
     # Run binary search
     run = None
@@ -75,10 +89,12 @@ if __name__ == "__main__":
         current_loss = binary_search.calc_loss(next_params)
         run, next_params = binary_search.search_next_params(current_loss)
         count+=1
-        print(f"Iteration: {count}")
+        print(f"Iteration: {count}, Params: {next_params}, Loss: {current_loss}")
+        if run == 0:
+            break
 
 
     # Display history of parameter and loss
     print("Search history (params, loss):")
-    for params, loss in binary_search.history:
-        print(f"Params: {params}, Loss: {loss}")
+    for i, (params, loss) in enumerate(binary_search.history):
+        print(f"Params: {params}, Loss: {loss:.4f}")
