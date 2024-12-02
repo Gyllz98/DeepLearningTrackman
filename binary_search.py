@@ -1,7 +1,9 @@
 import numpy as np
 import torch
+
 from torch.nn import Module
 from models import SpectrVelCNNRegr
+from SearchNet import *
 
 
 class BinarySearch:
@@ -32,7 +34,7 @@ class BinarySearch:
 
         # Calculates the loss of min params for initial comparison
         if len(self.history) == 1:
-            left_loss = self.calc_loss(self.left_params)
+            left_loss = self.calc_loss_rand(self.left_params)
             self.history.append((self.left_params, left_loss))
 
         # Compare losses at different points
@@ -56,8 +58,11 @@ class BinarySearch:
         self.history.append((mid_params, current_loss)) # Save the param count & loss
         return None, mid_params
 
-    # Calculate loss of min. param count (1000)
-    def calc_loss(self, params): 
+    def calc_loss(self, params):
+        pass
+
+    # Outputs random loss wrt. parameter count. - Used for testing
+    def calc_loss_rand(self, params): 
         # This is to recalculate if the middle params is better then both the min and max params. 
         # Also for general loss calculation. Or at least to call a the model with loss. 
         return np.exp(-params / self.init_max_params) + np.random.uniform(0, 0.01)  # Random loss
