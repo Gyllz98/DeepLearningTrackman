@@ -56,21 +56,27 @@ if __name__ == "__main__":
 
     # Binary search parameters
     init_max_params = 1000000
+    current_loss = np.exp(-init_max_params / init_max_params) + np.random.uniform(0, 0.01)
     tolerance = 0.05
 
     # Simulate the initial loss for the max parameter count
     binary_search = BinarySearch(
         init_max_params=init_max_params,
-        init_right_loss=np.exp(-init_max_params / init_max_params) + np.random.uniform(0, 0.01),  # Simulated loss
+        init_right_loss=current_loss,  # Simulated loss
         model=model,
         tolerance=tolerance
     )
 
     # Run binary search
-    run = 1
-    while run != 0:
+    run = None
+    next_params = binary_search.right_params
+    count = 0
+    while run is None:
         current_loss = binary_search.calc_loss(next_params)
         run, next_params = binary_search.search_next_params(current_loss)
+        count+=1
+        print(f"Iteration: {count}")
+
 
     # Display history of parameter and loss
     print("Search history (params, loss):")
