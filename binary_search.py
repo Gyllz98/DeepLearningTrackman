@@ -25,21 +25,35 @@ class BinarySearch:
 
         # Check tolerance convergence
         if abs(mid_params - self.right_params) <= self.tolerance:
+            print(f"\nMid params: {mid_params}")
+            print(f"Absolute difference of mid & right params: {abs(mid_params - self.right_params)}")
+            print(f"Tolerance: {self.tolerance}\n")
             return 0, self.right_params
 
+        # Calculates the loss of min params for initial comparison
+        if len(self.history) == 1:
+            left_loss = self.calc_loss(self.left_params)
+            self.history.append((self.left_params, left_loss))
+
         # Compare losses at different points
-        if len(self.history) > 1 and current_loss < self.history[-2][1]:  # Middle loss better than right loss
+        if len(self.history) > 1 and current_loss < self.history[-1][1]:  # Middle loss better than right loss
+            print("M < R")
             # Check relationship with initial loss
             if current_loss < self.history[0][1]:
+                print("M < L")
                 # Middle loss is best so far
-                if self.history[0][1] < self.history[-2][1]:
+                if self.history[0][1] < self.history[-1][1]:
+                    print("L < R")
                     # Initial loss was better than right loss
                     self.right_params = mid_params  # Reduce right boundary
                 else: # Right loss was better
+                    print("L > R")
                     self.left_params = mid_params  # Increase left boundary
             else: # Middle loss worse than initial loss
+                print("M > L")
                 self.left_params = mid_params  # Increase left boundary
         else: # Right loss is better
+            print("M > R")
             self.left_params = mid_params  # Increase left boundary
         
         self.history.append((mid_params, current_loss))
@@ -88,10 +102,12 @@ if __name__ == "__main__":
     while run is None:
         current_loss = binary_search.calc_loss(next_params)
         run, next_params = binary_search.search_next_params(current_loss)
-        count+=1
-        print(f"Iteration: {count}, Params: {next_params}, Loss: {current_loss}")
         if run == 0:
             break
+        else:
+            count+=1
+            print(f"Iteration: {count}, Params: {next_params}, Loss: {current_loss}")
+        
 
 
     # Display history of parameter and loss
