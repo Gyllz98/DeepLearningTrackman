@@ -18,10 +18,10 @@ class BinarySearch:
         self.history = []  # (param count, loss)
         self.history.append((self.right_params, self.right_loss))
 
+
     def search_next_params(self, current_loss): # Correct history appending 
 
-        # Calculate midpoint
-        mid_params = (self.left_params + self.right_params) // 2
+        mid_params = (self.left_params + self.right_params) // 2 # Calculate midpoint
 
         # Check tolerance convergence
         if abs(mid_params - self.right_params) <= self.tolerance:
@@ -36,46 +36,39 @@ class BinarySearch:
             self.history.append((self.left_params, left_loss))
 
         # Compare losses at different points
-        if len(self.history) > 1 and current_loss < self.history[-1][1]:  # Middle loss better than right loss
+        if len(self.history) > 1 and current_loss < self.history[-1][1]:  # M < R
             print("M < R")
-            # Check relationship with initial loss
-            if current_loss < self.history[0][1]:
+            if current_loss < self.history[0][1]: # M < L
                 print("M < L")
-                # Middle loss is best so far
-                if self.history[0][1] < self.history[-1][1]:
+                if self.history[0][1] < self.history[-1][1]: # L < R
                     print("L < R")
-                    # Initial loss was better than right loss
                     self.right_params = mid_params  # Reduce right boundary
-                else: # Right loss was better
+                else: # L > R
                     print("L > R")
                     self.left_params = mid_params  # Increase left boundary
-            else: # Middle loss worse than initial loss
+            else: # M > L
                 print("M > L")
                 self.left_params = mid_params  # Increase left boundary
-        else: # Right loss is better
+        else: # M > R
             print("M > R")
             self.left_params = mid_params  # Increase left boundary
         
-        self.history.append((mid_params, current_loss))
+        self.history.append((mid_params, current_loss)) # Save the param count & loss
         return None, mid_params
 
-
-    def calc_loss(self, params):
-        """
-        Placeholder loss function for demonstration. 
-        Assumes the loss decreases as parameters increase up to a point.
-        """
+    # Calculate loss of min. param count (1000)
+    def calc_loss(self, params): 
         # This is to recalculate if the middle params is better then both the min and max params. 
         # Also for general loss calculation. Or at least to call a the model with loss. 
-        return np.exp(-params / self.init_max_params) + np.random.uniform(0, 0.01)  # Adding small noise
+        return np.exp(-params / self.init_max_params) + np.random.uniform(0, 0.01)  # Random loss
 
-    def print_tolerance(self):
+    def print_tolerance(self): # Print tolerance
         print(f"Tolerance: {self.tolerance}")
 
 
 if __name__ == "__main__":
     # Initialize the model
-    model = SpectrVelCNNRegr()
+    model = SpectrVelCNNRegr() ### NOT USED
 
     # Calculate total model parameters
     total_params = sum(p.numel() for p in model.parameters())
