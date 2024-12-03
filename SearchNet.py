@@ -51,21 +51,29 @@ class SearchNet(SpectrVelCNNRegr):
         fc_input_size = self._compute_fc_input_size(beta, num_conv_layers)
 
         # Define FC layers
-        max_fc_layers = 2
-        num_fc_layers = max(1, int(max_fc_layers * gamma_fc))
+        max_fc_layers = 3
+        num_fc_layers = max(0, max_fc_layers * gamma_fc)
 
-        # First FC layer
-        self.linear1 = nn.Linear(fc_input_size, int(1024 * alpha))
         
         # Second FC layer if gamma_fc allows
-        if num_fc_layers > 1:
+        max_fc_layers = 3
+        num_fc_layers = max(1, int(max_fc_layers * gamma_fc))  # This gives us 1, 2, or 3 layers
+
+        if num_fc_layers == 3:
+            # Three FC layers
+            self.linear1 = nn.Linear(fc_input_size, int(1024 * alpha))
             self.linear2 = nn.Linear(int(1024 * alpha), int(256 * alpha))
             self.linear3 = nn.Linear(int(256 * alpha), 1)
-        else:
-            # If only one FC layer, connect it directly to output
+        elif num_fc_layers == 2:
+            # Two FC layers
+            self.linear1 = nn.Linear(fc_input_size, int(1024 * alpha))
             self.linear2 = None
             self.linear3 = nn.Linear(int(1024 * alpha), 1)
-
+        else:  # num_fc_layers == 1
+            # Single FC layer
+            self.linear1 = nn.Linear(fc_input_size, 1)
+            self.linear2 = None
+            self.linear3 = None
     def _compute_fc_input_size(self, beta, num_conv_layers):
         """Compute the input size for the first FC layer based on conv output dimensions."""
         height, width = 74, 918
@@ -100,10 +108,18 @@ class SearchNet(SpectrVelCNNRegr):
         x = torch.flatten(x, 1)
         
         # Pass through FC layers
-        x = F.relu(self.linear1(x))
-        if self.linear2 is not None:
+        if self.linear2 is not None and self.linear3 is not None:
+            # Three layer case
+            x = F.relu(self.linear1(x))
             x = F.relu(self.linear2(x))
-        x = self.linear3(x)
+            x = self.linear3(x)
+        elif self.linear3 is not None:
+            # Two layer case
+            x = F.relu(self.linear1(x))
+            x = self.linear3(x)
+        else:
+            # Single layer case
+            x = self.linear1(x)
         return x
 
 def calculate_params_precise(alpha, beta, gamma_conv=1.0, gamma_fc=1.0, input_height=74, input_width=918):
@@ -151,25 +167,27 @@ def calculate_params_precise(alpha, beta, gamma_conv=1.0, gamma_fc=1.0, input_he
     final_channels = max(1, int(conv_layers[-1]['out_channels'] * beta))
     fc_input_size = final_channels * height * width
     
+    # In calculate_params_precise:
     # FC layers parameters
-    max_fc_layers = 2
+    max_fc_layers = 3
     num_fc_layers = max(1, int(max_fc_layers * gamma_fc))
     fc_params = 0
-    
-    # First FC layer
-    fc1_out = int(1024 * alpha)
-    fc_params += (fc_input_size * fc1_out) + fc1_out
-    
-    if num_fc_layers > 1:
-        # Second FC layer
+
+    if num_fc_layers == 3:
+        # Three FC layers
+        fc1_out = int(1024 * alpha)
         fc2_out = int(256 * alpha)
-        fc_params += (fc1_out * fc2_out) + fc2_out
-        last_size = fc2_out
-    else:
-        last_size = fc1_out
-    
-    # Output layer
-    fc_params += (last_size * 1) + 1
+        fc_params += (fc_input_size * fc1_out) + fc1_out  # First layer
+        fc_params += (fc1_out * fc2_out) + fc2_out        # Second layer
+        fc_params += (fc2_out * 1) + 1                    # Output layer
+    elif num_fc_layers == 2:
+        # Two FC layers
+        fc1_out = int(1024 * alpha)
+        fc_params += (fc_input_size * fc1_out) + fc1_out  # First layer
+        fc_params += (fc1_out * 1) + 1                    # Output layer
+    else:  # num_fc_layers == 1
+        # Single FC layer
+        fc_params += (fc_input_size * 1) + 1              # Direct to output
     
     return conv_params + fc_params
 
@@ -193,10 +211,10 @@ def determine_valid_gammas(target_params, original_params=38414929):
         
     # Between 25-40% of parameters: must remove at least one layer
     if ratio > 0.25:
-        return (0.75, 1.0), (0.75, 0.75)  # Force FC layer removal
+        return (0.75, 1.0), (0.33, 0.75)  # Force FC layer removal
         
     # Below 25% of parameters: must remove two layers
-    return (0.75, 0.75), (0.75, 0.75)  # Force both layer removals
+    return (0.75, 0.75), (0.33, 0.75)  # Force both layer removals
 
 def find_scaling_factors_grid_search(target_params, 
                                    alpha_range=(0.1, 1.5, 30),
@@ -284,14 +302,14 @@ def find_scaling_factors_grid_search(target_params,
     return best_config
 
 if __name__ == "__main__":
-    TARGET_PARAM = (38414929 // 2) // 2
+    TARGET_PARAM = (38414929// 100)
     print(f"Target parameters: {TARGET_PARAM}")
     
     result = find_scaling_factors_grid_search(
         target_params=TARGET_PARAM, 
         tolerance=0.01,
-        alpha_range=(0.1, 3, 30),
-        beta_range=(0.75, 1.5, 30)
+        alpha_range=(0.01, 3, 20),
+        beta_range=(0.5, 2.0, 20)
     )
     
     if result:
