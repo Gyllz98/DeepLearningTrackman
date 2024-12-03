@@ -32,7 +32,7 @@ class BinarySearch:
             print(f"\nMid params: {mid_params}")
             print(f"Absolute difference of mid & right params: {abs(mid_params - self.right_params)}")
             print(f"Tolerance: {self.tolerance}\n")
-            return 0, self.right_params
+            return 1, self.right_params
 
         # Calculates the loss of min params for initial comparison
         if len(self.history) == 1:
@@ -95,7 +95,8 @@ class BinarySearch:
 if __name__ == "__main__":
     print(f"\n\n### Testing the binary search ###")
     # Initialize the model
-    model = SpectrVelCNNRegr ### NOT USED
+    # model = SpectrVelCNNRegr
+    model = SearchNet
 
     # Calculate total model parameters
     # total_params = sum(p.numel() for p in model.parameters())
@@ -103,7 +104,7 @@ if __name__ == "__main__":
     print(f"\n\nModel total parameters: {total_params}")
 
     # Binary search parameters
-    init_max_params = 1000000
+    init_max_params = total_params
     current_loss = np.exp(-init_max_params / init_max_params) + np.random.uniform(0, 0.01)
     tolerance = 0.05
 
@@ -117,14 +118,14 @@ if __name__ == "__main__":
     binary_search.print_self()
 
     # Run binary search
-    run = None
+    stop = None
     next_params = binary_search.mid_params
     count = 0
-    while run is None:
+    while stop is None:
         # current_loss = binary_search.calc_loss_rand(next_params)
         current_loss = binary_search.calc_loss(next_params)
-        run, next_params = binary_search.search_next_params(current_loss)
-        if run == 0:
+        stop, next_params = binary_search.search_next_params(current_loss)
+        if stop == 1:
             break
         else:
             count+=1

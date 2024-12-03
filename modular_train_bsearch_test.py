@@ -9,16 +9,15 @@ import wandb
 from custom_transforms import LoadSpectrogram, NormalizeSpectrogram, ToTensor, InterpolateSpectrogram
 from data_management import make_dataset_name
 from models import SpectrVelCNNRegr, YourModel, weights_init_uniform_rule
-from binary_search import *
-from check_model_complexity import *
+from SearchNet import SearchNet
 
 # GROUP NUMBER
 GROUP_NUMBER = 42
 
 # CONSTANTS TO MODIFY AS YOU WISH
-MODEL = YourModel
+MODEL = SearchNet
 LEARNING_RATE = 10**-5
-EPOCHS = 100 # the model converges in test perfermance after ~250-300 epochs
+EPOCHS = 1 # the model converges in test perfermance after ~250-300 epochs
 BATCH_SIZE = 10
 NUM_WORKERS = 4
 OPTIMIZER = torch.optim.SGD
@@ -75,20 +74,6 @@ def train_one_epoch(loss_fn, model, train_data_loader):
             running_loss = 0.
 
     return total_loss / (i+1)
-
-def evaluate_loss(loss_fn, model, data_loader):
-    """Evaluate the model's performance on validation/test data."""
-    running_loss = 0.0
-    with torch.no_grad():
-        for i, data in enumerate(data_loader, 0):
-            inputs, targets = data
-            inputs, targets = inputs.to(DEVICE), targets.to(DEVICE)
-            outputs = model(inputs)
-            loss = loss_fn(outputs, targets)
-            running_loss += loss.item()
-
-    avg_loss = running_loss / len(data_loader)
-    return avg_loss
 
 if __name__ == "__main__":
     print(f"Using {DEVICE} device")
@@ -159,105 +144,78 @@ if __name__ == "__main__":
     model_name = f"model_{MODEL.__name__}_{wandb.run.name}"
     model_path = MODEL_DIR / model_name
 
-    # import pdb; pdb.set_trace()
-
-    # Calculate initial max parameters
-    total_params = 1e6 # CHANGE THIS (check_model_complexity)
-
-    # Run one training cycle to calculate the initial loss
-    initial_loss = evaluate_loss(model, train_data_loader)
-
-    # Initialize binary search
-    binary_search = BinarySearch(
-        init_max_params=total_params,
-        init_right_loss=initial_loss,
-        model=model,
-        tolerance=0.05  # Adjust if necessary
-    )
 
     ## TRAINING LOOP
-    epoch_number = 0 # CHANGE THIS 
+    epoch_number = 0
     best_vloss = 1_000_000.
+
+    # import pdb; pdb.set_trace()
     
-    while True:
-        print("Starting training with current model parameters...")
+    for epoch in range(EPOCHS):
+        print('EPOCH {}:'.format(epoch_number + 1))
 
-        for epoch in range(EPOCHS):
-            print('EPOCH {}:'.format(epoch_number + 1))
+        # Make sure gradient tracking is on
+        model.train(True)
 
-            # Training mode
-            model.train(True)
-            avg_loss = 0.0
-            for i, data in enumerate(train_data_loader, 0):
-                inputs, targets = data["spectrogram"].to(DEVICE), data["target"].to(DEVICE)
+        # Do a pass over the training data and get the average training MSE loss
+        avg_loss = train_one_epoch(MODEL.loss_fn, model, train_data_loader)
+        
+        # Calculate the root mean squared error: This gives
+        # us the opportunity to evaluate the loss as an error
+        # in natural units of the ball velocity (m/s)
+        rmse = avg_loss**(1/2)
 
-                # Zero the gradients
-                optimizer.zero_grad()
+        # Take the log as well for easier tracking of the
+        # development of the loss.
+        log_rmse = log10(rmse)
 
-                # Forward + Backward + Optimize
-                outputs = model(inputs)
-                loss = model.loss_fn(outputs.squeeze(), targets)
-                loss.backward()
-                optimizer.step()
+        # Reset test loss
+        running_test_loss = 0.
 
-                avg_loss += loss.item()
+        # Set the model to evaluation mode
+        model.eval()
 
-            avg_loss /= len(train_data_loader)
+        # Disable gradient computation and evaluate the test data
+        with torch.no_grad():
+            for i, vdata in enumerate(test_data_loader):
+                # Get data and targets
+                spectrogram, target = vdata["spectrogram"].to(DEVICE), vdata["target"].to(DEVICE)
+                
+                # Get model outputs
+                test_outputs = model(spectrogram)
 
-            # Calculate metrics
-            rmse = avg_loss**(1 / 2)
-            log_rmse = log10(rmse)
+                # Calculate the loss
+                test_loss = MODEL.loss_fn(test_outputs.squeeze(), target)
 
-            # Validation phase
-            running_test_loss = 0.0
-            model.eval()
-            with torch.no_grad():
-                for i, vdata in enumerate(test_data_loader):
-                    spectrogram, target = vdata["spectrogram"].to(DEVICE), vdata["target"].to(DEVICE)
-                    test_outputs = model(spectrogram)
-                    test_loss = model.loss_fn(test_outputs.squeeze(), target)
-                    running_test_loss += test_loss.item()
+                # Add loss to runnings loss
+                running_test_loss += test_loss
 
-            avg_test_loss = running_test_loss / (i + 1)
-            test_rmse = avg_test_loss**(1 / 2)
-            log_test_rmse = log10(test_rmse)
+        # Calculate average test loss
+        avg_test_loss = running_test_loss / (i + 1)
 
-            print('LOSS train {} ; LOSS test {}'.format(avg_loss, avg_test_loss))
+        # Calculate the RSE for the training predictions
+        test_rmse = avg_test_loss**(1/2)
 
-            # Log metrics to WandB
-            wandb.log({
-                "loss": avg_loss,
-                "rmse": rmse,
-                "log_rmse": log_rmse,
-                "test_loss": avg_test_loss,
-                "test_rmse": test_rmse,
-                "log_test_rmse": log_test_rmse,
-            })
+        # Take the log as well for visualisation
+        log_test_rmse = torch.log10(test_rmse)
 
-            # Track best performance
-            if avg_test_loss < best_vloss:
-                best_vloss = avg_test_loss
-                torch.save(model.state_dict(), "best_model.pth")
+        print('LOSS train {} ; LOSS test {}'.format(avg_loss, avg_test_loss))
+        
+        # log metrics to wandb
+        wandb.log({
+            "loss": avg_loss,
+            "rmse": rmse,
+            "log_rmse": log_rmse,
+            "test_loss": avg_test_loss,
+            "test_rmse": test_rmse,
+            "log_test_rmse": log_test_rmse,
+        })
 
-            epoch_number += 1
+        # Track best performance, and save the model's state
+        if avg_test_loss < best_vloss:
+            best_vloss = avg_test_loss
+            torch.save(model.state_dict(), model_path)
 
-        # Perform a binary search step
-        print("Performing binary search...")
-        bsearch_finish, next_params = binary_search.search_next_params(avg_test_loss)
+        epoch_number += 1
 
-        # Check the tolerance condition for breaking the loop
-        if bsearch_finish == 0:
-            print("Binary search completed.")
-            break
-
-        # Update model architecture dynamically if necessary
-        print(f"Updating model to {next_params} parameters...")
-        model = SpectrVelCNNRegr()  # Create a new model instance
-        model.apply(weights_init_uniform_rule)
-        model = model.to(DEVICE)
-
-        # Reinitialize optimizer with the new model
-        optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
-
-    print("Training and binary search completed.")
     wandb.finish()
