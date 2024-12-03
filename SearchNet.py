@@ -211,7 +211,7 @@ def determine_valid_gammas(target_params, original_params=38414929):
         
     # Between 25-40% of parameters: must remove at least one layer
     if ratio > 0.25:
-        return (0.75, 1.0), (0.75, 0.75)  # Force FC layer removal
+        return (0.75, 1.0), (0.33, 0.75)  # Force FC layer removal
         
     # Below 25% of parameters: must remove two layers
     return (0.75, 0.75), (0.33, 0.75)  # Force both layer removals
