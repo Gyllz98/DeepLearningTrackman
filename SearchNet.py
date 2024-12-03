@@ -268,18 +268,18 @@ def find_scaling_factors_grid_search(target_params,
     # Print results to console
     if best_config:
         alpha, beta, gamma_conv, gamma_fc, params, abs_diff, rel_diff = best_config
-        print("\n===== Best Configuration =====")
-        print(f"Alpha:          {alpha:.4f}")
-        print(f"Beta:           {beta:.4f}")
-        print(f"Gamma Conv:     {gamma_conv:.4f}")
-        print(f"Gamma FC:       {gamma_fc:.4f}")
-        print(f"Total Params:   {params:,d}")
-        print(f"Absolute Diff:  {abs_diff:,d}")
-        print(f"Relative Diff:  {rel_diff:.4f}%")
-        print(f"Architecture:   {4 if gamma_conv == 1.0 else 3} conv layers, "
-              f"{2 if gamma_fc == 1.0 else 1} FC layers")
-        print(f"Target ratio:   {target_params/38414929:.3f}")
-        print(f"Log file:       {log_file}")
+        # print("\n===== Best Configuration =====")
+        # print(f"Alpha:          {alpha:.4f}")
+        # print(f"Beta:           {beta:.4f}")
+        # print(f"Gamma Conv:     {gamma_conv:.4f}")
+        # print(f"Gamma FC:       {gamma_fc:.4f}")
+        # print(f"Total Params:   {params:,d}")
+        # print(f"Absolute Diff:  {abs_diff:,d}")
+        # print(f"Relative Diff:  {rel_diff:.4f}%")
+        # print(f"Architecture:   {4 if gamma_conv == 1.0 else 3} conv layers, "
+        #       f"{2 if gamma_fc == 1.0 else 1} FC layers")
+        # print(f"Target ratio:   {target_params/38414929:.3f}")
+        # print(f"Log file:       {log_file}")
     
     return best_config
 

@@ -4,6 +4,7 @@ import torch
 from torch.nn import Module
 from models import SpectrVelCNNRegr
 from SearchNet import *
+from check_model_complexity import print_model_complexity
 
 
 class BinarySearch:
@@ -15,6 +16,7 @@ class BinarySearch:
         self.left_loss = None
         self.left_params = 1000
         self.right_params = init_max_params
+        self.mid_params = (self.left_params + self.right_params) // 2 
 
         # History to track search progress
         self.history = []  # (param count, loss)
@@ -60,26 +62,45 @@ class BinarySearch:
 
     def calc_loss(self, params):
         result = find_scaling_factors_grid_search(params) # Find the optimal alpha and beta
+
+        if result is None: 
+            raise ValueError(f"Could not find valid config for {params} parameters")
         
-        return result
+        alpha, beta, gamma_conv, gamma_fc, total_params, abs_diff, rel_diff = result
+        model = SearchNet(alpha=alpha, beta=beta, gamma_conv=gamma_conv, gamma_fc=gamma_fc)
+
+        # Call some function that trains the model and outputs the loss
+        x = torch.randn(1, 6, 74, 918)
+        target = torch.randn(1, 1)
+
+        criterion = nn.MSELoss()
+        output = model(x)
+        loss = criterion(output, target)
+
+        return loss.item() # return loss
 
     # Outputs random loss wrt. parameter count. - Used for testing
     def calc_loss_rand(self, params): 
-        # This is to recalculate if the middle params is better then both the min and max params. 
-        # Also for general loss calculation. Or at least to call a the model with loss. 
         return np.exp(-params / self.init_max_params) + np.random.uniform(0, 0.01)  # Random loss
 
-    def print_tolerance(self): # Print tolerance
+    def print_self(self): # Print tolerance
+        print(f"Left parameter count: {self.left_params}")
+        print(f"Right parameter count: {self.right_params}")
+        print(f"Mid parameter count: {self.mid_params}")
+        print(f"Right loss: {self.right_loss}")
         print(f"Tolerance: {self.tolerance}")
+        print(f"Model: {self.model}")
 
 
 if __name__ == "__main__":
+    print(f"\n\n### Testing the binary search ###")
     # Initialize the model
-    model = SpectrVelCNNRegr() ### NOT USED
+    model = SpectrVelCNNRegr ### NOT USED
 
     # Calculate total model parameters
-    total_params = sum(p.numel() for p in model.parameters())
-    print(f"Model total parameters: {total_params}")
+    # total_params = sum(p.numel() for p in model.parameters())
+    total_params = print_model_complexity(model)
+    print(f"\n\nModel total parameters: {total_params}")
 
     # Binary search parameters
     init_max_params = 1000000
@@ -93,14 +114,15 @@ if __name__ == "__main__":
         model=model,
         tolerance=tolerance
     )
-    binary_search.print_tolerance()
+    binary_search.print_self()
 
     # Run binary search
     run = None
-    next_params = binary_search.right_params
+    next_params = binary_search.mid_params
     count = 0
     while run is None:
-        current_loss = binary_search.calc_loss_rand(next_params)
+        # current_loss = binary_search.calc_loss_rand(next_params)
+        current_loss = binary_search.calc_loss(next_params)
         run, next_params = binary_search.search_next_params(current_loss)
         if run == 0:
             break
@@ -114,6 +136,3 @@ if __name__ == "__main__":
     print("Search history (params, loss):")
     for i, (params, loss) in enumerate(binary_search.history):
         print(f"Params: {params}, Loss: {loss:.4f}")
-
-    result = binary_search.calc_loss(100000)
-    print(result)
